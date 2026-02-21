@@ -460,18 +460,13 @@ data.results.forEach(map=>{
 
 html+=`
 
-<div>
-
-Seed: ${map.seed} <br>
-Size: ${map.size} <br>
-Match: ${map.match} <br>
-
-<a href="${map.link}" target="_blank">
-Map öffnen
-</a>
-
-<hr>
-
+<div class="result-item">
+    <div class="result-seed">${map.name}</div>
+    <div>Seed: ${map.seed} | Size: ${map.size}</div>
+    <div class="result-match">Match: ${map.match}</div>
+    <a href="${map.link}" target="_blank" class="result-link">
+        Map öffnen
+    </a>
 </div>
 
 `
