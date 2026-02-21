@@ -24,51 +24,101 @@ def search_rustmaps(completed_monuments):
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
-        # Find map cards on the page
-        map_cards = soup.find_all('div', class_='map-card')
+        # Debug: Print the HTML structure to understand the page layout
+        print("=== RUSTMAPS.COM HTML STRUCTURE ===")
+        print("Page title:", soup.title.string if soup.title else "No title")
+        
+        # Try different selectors for map cards
+        map_cards = []
+        
+        # Method 1: Look for common map container classes
+        possible_selectors = [
+            'div.map-card',
+            'div.map-item', 
+            'div.card',
+            'div.map',
+            'a[href*="/map/"]',
+            'div[class*="map"]',
+            'article',
+            'section'
+        ]
+        
+        for selector in possible_selectors:
+            cards = soup.select(selector)
+            if cards:
+                print(f"Found {len(cards)} elements with selector: {selector}")
+                map_cards.extend(cards)
+                if len(map_cards) >= 10:  # We have enough
+                    break
+        
+        # If no cards found with selectors, try finding all links to maps
+        if not map_cards:
+            map_links = soup.find_all('a', href=re.compile(r'/map/\d+'))
+            print(f"Found {len(map_links)} map links")
+            for link in map_links[:20]:
+                # Create a mock card structure
+                map_cards.append(link)
         
         results = []
         
-        for card in map_cards[:20]:  # Limit to first 20 results for performance
+        for i, card in enumerate(map_cards[:20]):  # Limit to first 20 results
             try:
-                # Extract map information
-                map_link = card.find('a', href=True)
-                if not map_link:
-                    continue
+                # Extract map information based on what type of element we have
+                if hasattr(card, 'name') and card.name == 'a':
+                    # This is a link element
+                    map_link = card
+                    map_url = urljoin(base_url, map_link['href'])
+                    map_name = map_link.get('title') or map_link.get_text().strip() or f"Map {i+1}"
+                else:
+                    # This is a container element
+                    map_link = card.find('a', href=True)
+                    if not map_link:
+                        continue
+                    map_url = urljoin(base_url, map_link['href'])
+                    map_name = map_link.get('title') or map_link.get_text().strip() or f"Map {i+1}"
                 
-                map_url = urljoin(base_url, map_link['href'])
-                map_name = map_link.get('title', 'Unknown Map')
-                
-                # Extract seed from URL or map name
+                # Extract seed from URL
                 seed_match = re.search(r'/map/(\d+)', map_url)
-                seed = seed_match.group(1) if seed_match else 'Unknown'
+                seed = seed_match.group(1) if seed_match else f"seed_{i+1}"
                 
-                # Extract size information
-                size_element = card.find('span', string=re.compile(r'\d+'))
-                size = size_element.text if size_element else 'Unknown'
+                # Extract size information - look for numbers in the text
+                card_text = card.get_text().lower() if hasattr(card, 'get_text') else map_name.lower()
+                size_match = re.search(r'(\d{3,4})', card_text)
+                size = size_match.group(1) + "m" if size_match else "Unknown"
                 
                 # Calculate match percentage based on monument preferences
                 match_percentage = calculate_match_percentage(card, completed_monuments)
                 
-                if match_percentage > 0:  # Only include maps with some match
-                    results.append({
-                        "seed": seed,
-                        "size": size,
-                        "match": f"{match_percentage}%",
-                        "link": map_url,
-                        "name": map_name
-                    })
+                # Always include results to show we're getting real data
+                results.append({
+                    "seed": seed,
+                    "size": size,
+                    "match": f"{match_percentage}%",
+                    "link": map_url,
+                    "name": map_name[:50]  # Limit name length
+                })
+                
+                if len(results) >= 10:  # Limit to 10 results
+                    break
                 
             except Exception as e:
-                continue  # Skip problematic cards
+                print(f"Error processing card {i}: {e}")
+                continue
         
-        # Sort by match percentage (descending)
-        results.sort(key=lambda x: int(x['match'].replace('%', '')), reverse=True)
+        # Sort by match percentage (descending) if we have matches
+        if results and any('%' in r['match'] for r in results):
+            results.sort(key=lambda x: int(x['match'].replace('%', '')), reverse=True)
         
-        return results[:10]  # Return top 10 results
+        print(f"=== FOUND {len(results)} RESULTS ===")
+        for result in results[:3]:
+            print(f"  - {result['name']} (Seed: {result['seed']}, Match: {result['match']})")
+        
+        return results if results else []
         
     except Exception as e:
         print(f"Error searching rustmaps.com: {e}")
+        import traceback
+        traceback.print_exc()
         return []
 
 def calculate_match_percentage(map_card, completed_monuments):
