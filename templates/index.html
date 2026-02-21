@@ -31,46 +31,182 @@ margin-top:20px;
 
 <h1>Rust Map Matcher</h1>
 
-Launch Site:
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 1200px; margin: 0 auto;">
 
+<div>
+<h3>Launch Site:</h3>
 <select id="launch">
-
 <option value="">Egal</option>
 <option value="snow">Snow</option>
 <option value="desert">Desert</option>
 <option value="temperate">Temperate</option>
-
 </select>
+</div>
 
-<br>
-
-Outpost:
-
+<div>
+<h3>Outpost:</h3>
 <select id="outpost">
-
 <option value="">Egal</option>
 <option value="snow">Snow</option>
 <option value="desert">Desert</option>
 <option value="temperate">Temperate</option>
-
 </select>
+</div>
 
-<br>
-
-Airfield:
-
+<div>
+<h3>Airfield:</h3>
 <select id="airfield">
-
 <option value="">Egal</option>
 <option value="snow">Snow</option>
 <option value="desert">Desert</option>
 <option value="temperate">Temperate</option>
-
 </select>
+</div>
+
+<div>
+<h3>Abandoned Cabins:</h3>
+<select id="abandoned_cabins">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Abandoned Military Base:</h3>
+<select id="abandoned_military_base">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Abandoned Supermarket:</h3>
+<select id="abandoned_supermarket">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Excavator Pit:</h3>
+<select id="excavator_pit">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Ferry Terminal:</h3>
+<select id="ferry_terminal">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Fishing Village:</h3>
+<select id="fishing_village">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Harbor:</h3>
+<select id="harbor">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>HQM Quarry:</h3>
+<select id="hqm_quarry">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Junkyard:</h3>
+<select id="junkyard">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Arctic Research Base:</h3>
+<select id="arctic_research_base">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Lighthouse:</h3>
+<select id="lighthouse">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Military Tunnels:</h3>
+<select id="military_tunnels">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Mining Outpost:</h3>
+<select id="mining_outpost">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+<div>
+<h3>Missile Silo:</h3>
+<select id="missile_silo">
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+</select>
+</div>
+
+</div>
 
 <br>
-
-<button onclick="search()">Map finden</button>
+<button onclick="search()" style="padding: 15px 30px; font-size: 18px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Map finden</button>
 
 <div class="resultBox" id="results"></div>
 
@@ -80,21 +216,30 @@ async function search(){
 
 let formData = new FormData()
 
-formData.append("launch",
-document.getElementById("launch").value)
+// Original monuments
+formData.append("launch", document.getElementById("launch").value)
+formData.append("outpost", document.getElementById("outpost").value)
+formData.append("airfield", document.getElementById("airfield").value)
 
-formData.append("outpost",
-document.getElementById("outpost").value)
-
-formData.append("airfield",
-document.getElementById("airfield").value)
-
+// New monuments
+formData.append("abandoned_cabins", document.getElementById("abandoned_cabins").value)
+formData.append("abandoned_military_base", document.getElementById("abandoned_military_base").value)
+formData.append("abandoned_supermarket", document.getElementById("abandoned_supermarket").value)
+formData.append("excavator_pit", document.getElementById("excavator_pit").value)
+formData.append("ferry_terminal", document.getElementById("ferry_terminal").value)
+formData.append("fishing_village", document.getElementById("fishing_village").value)
+formData.append("harbor", document.getElementById("harbor").value)
+formData.append("hqm_quarry", document.getElementById("hqm_quarry").value)
+formData.append("junkyard", document.getElementById("junkyard").value)
+formData.append("arctic_research_base", document.getElementById("arctic_research_base").value)
+formData.append("lighthouse", document.getElementById("lighthouse").value)
+formData.append("military_tunnels", document.getElementById("military_tunnels").value)
+formData.append("mining_outpost", document.getElementById("mining_outpost").value)
+formData.append("missile_silo", document.getElementById("missile_silo").value)
 
 let response = await fetch("/search",{
-
 method:"POST",
 body:formData
-
 })
 
 let data = await response.json()
