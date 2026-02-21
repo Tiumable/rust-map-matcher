@@ -7,20 +7,209 @@
 
 <style>
 
-body{
-background:#1e1e1e;
-color:white;
-font-family:Arial;
-text-align:center;
+@keyframes pulse {
+  0% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.2); opacity: 0.1; }
+  100% { transform: scale(1); opacity: 0.3; }
 }
 
-select,button{
-padding:10px;
-margin:10px;
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-5px); }
+}
+
+body{
+background: linear-gradient(135deg, #1e1e1e 0%, #2d2d2d 100%);
+color:white;
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+text-align:center;
+min-height: 100vh;
+margin: 0;
+padding: 20px;
+position: relative;
+overflow-x: hidden;
+}
+
+h1{
+font-size: 2.5rem;
+margin-bottom: 30px;
+text-transform: uppercase;
+letter-spacing: 2px;
+text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+background: linear-gradient(45deg, #ff6b6b, #ffd93d);
+-webkit-background-clip: text;
+-webkit-text-fill-color: transparent;
+background-clip: text;
+animation: float 3s ease-in-out infinite;
+}
+
+/* Animated background elements */
+body::before {
+  content: '';
+  position: fixed;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(0, 123, 255, 0.1) 0%, transparent 70%);
+  animation: pulse 8s ease-in-out infinite;
+  z-index: -2;
+}
+
+.container{
+max-width: 1400px;
+margin: 0 auto;
+}
+
+.monument-grid{
+display: grid;
+grid-template-columns: repeat(3, 1fr);
+gap: 20px;
+max-width: 1200px;
+margin: 0 auto;
+}
+
+.monument-card{
+background: rgba(255, 255, 255, 0.05);
+border: 1px solid rgba(255, 255, 255, 0.1);
+border-radius: 12px;
+padding: 20px;
+transition: all 0.3s ease;
+backdrop-filter: blur(10px);
+box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.monument-card:hover{
+transform: translateY(-5px);
+border-color: rgba(255, 255, 255, 0.3);
+background: rgba(255, 255, 255, 0.1);
+}
+
+.monument-icon{
+font-size: 2rem;
+margin-bottom: 10px;
+display: block;
+}
+
+.monument-title{
+font-size: 0.9rem;
+font-weight: bold;
+text-transform: uppercase;
+color: #ffd93d;
+margin-bottom: 15px;
+letter-spacing: 1px;
+}
+
+select{
+width: 100%;
+padding: 12px;
+background: rgba(0, 0, 0, 0.3);
+border: 1px solid rgba(255, 255, 255, 0.2);
+border-radius: 6px;
+color: white;
+font-size: 1rem;
+cursor: pointer;
+transition: all 0.3s ease;
+}
+
+select:focus{
+outline: none;
+border-color: #007bff;
+box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+button{
+padding: 15px 40px;
+font-size: 1.2rem;
+background: linear-gradient(45deg, #007bff, #0056b3);
+color: white;
+border: none;
+border-radius: 50px;
+cursor: pointer;
+margin-top: 30px;
+transition: all 0.3s ease;
+text-transform: uppercase;
+font-weight: bold;
+box-shadow: 0 4px 15px rgba(0, 123, 255, 0.4);
+}
+
+button:hover{
+transform: translateY(-2px);
+box-shadow: 0 6px 20px rgba(0, 123, 255, 0.6);
+background: linear-gradient(45deg, #0056b3, #004085);
+}
+
+button:active{
+transform: translateY(0);
 }
 
 .resultBox{
-margin-top:20px;
+margin-top: 40px;
+padding: 20px;
+background: rgba(0, 0, 0, 0.3);
+border-radius: 12px;
+border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-item{
+background: rgba(255, 255, 255, 0.05);
+padding: 20px;
+margin: 15px 0;
+border-radius: 8px;
+border-left: 4px solid #007bff;
+transition: all 0.3s ease;
+}
+
+.result-item:hover{
+background: rgba(255, 255, 255, 0.1);
+transform: translateX(5px);
+}
+
+.result-seed{
+font-size: 1.5rem;
+font-weight: bold;
+color: #ffd93d;
+}
+
+.result-size{
+color: #00d2ff;
+font-weight: bold;
+}
+
+.result-match{
+color: #00ff88;
+font-weight: bold;
+font-size: 1.2rem;
+}
+
+.result-link{
+display: inline-block;
+margin-top: 10px;
+padding: 8px 16px;
+background: #28a745;
+color: white;
+text-decoration: none;
+border-radius: 4px;
+transition: background 0.3s ease;
+}
+
+.result-link:hover{
+background: #218838;
+}
+
+hr{
+border: none;
+border-top: 1px solid rgba(255, 255, 255, 0.2);
+margin: 20px 0;
+}
+
+@media (max-width: 768px){
+.monument-grid{
+grid-template-columns: 1fr;
+}
+h1{
+font-size: 1.8rem;
+}
 }
 
 </style>
@@ -29,177 +218,198 @@ margin-top:20px;
 
 <body>
 
+<div style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-image: linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px); background-size: 40px 40px; opacity: 0.3; pointer-events: none; z-index: -1;"></div>
+
+<div style="position: fixed; top: 20px; right: 20px; width: 100px; height: 100px; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); border-radius: 50%; animation: pulse 4s infinite; pointer-events: none;"></div>
+
 <h1>Rust Map Matcher</h1>
 
-<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 1200px; margin: 0 auto;">
+<div class="monument-grid">
 
-<div>
-<h3>Launch Site:</h3>
+<div class="monument-card">
+<span class="monument-icon">🚀</span>
+<span class="monument-title">Launch Site</span>
 <select id="launch">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Outpost:</h3>
+<div class="monument-card">
+<span class="monument-icon">⛺</span>
+<span class="monument-title">Outpost</span>
 <select id="outpost">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Airfield:</h3>
+<div class="monument-card">
+<span class="monument-icon">✈️</span>
+<span class="monument-title">Airfield</span>
 <select id="airfield">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Abandoned Cabins:</h3>
+<div class="monument-card">
+<span class="monument-icon">🏠</span>
+<span class="monument-title">Abandoned Cabins</span>
 <select id="abandoned_cabins">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Abandoned Military Base:</h3>
+<div class="monument-card">
+<span class="monument-icon">🏛️</span>
+<span class="monument-title">Abandoned Military Base</span>
 <select id="abandoned_military_base">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Abandoned Supermarket:</h3>
+<div class="monument-card">
+<span class="monument-icon">🛒</span>
+<span class="monument-title">Abandoned Supermarket</span>
 <select id="abandoned_supermarket">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Excavator Pit:</h3>
+<div class="monument-card">
+<span class="monument-icon">🚜</span>
+<span class="monument-title">Excavator Pit</span>
 <select id="excavator_pit">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Ferry Terminal:</h3>
+<div class="monument-card">
+<span class="monument-icon">⛴️</span>
+<span class="monument-title">Ferry Terminal</span>
 <select id="ferry_terminal">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Fishing Village:</h3>
+<div class="monument-card">
+<span class="monument-icon">🎣</span>
+<span class="monument-title">Fishing Village</span>
 <select id="fishing_village">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Harbor:</h3>
+<div class="monument-card">
+<span class="monument-icon">🚢</span>
+<span class="monument-title">Harbor</span>
 <select id="harbor">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>HQM Quarry:</h3>
+<div class="monument-card">
+<span class="monument-icon">⛏️</span>
+<span class="monument-title">HQM Quarry</span>
 <select id="hqm_quarry">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Junkyard:</h3>
+<div class="monument-card">
+<span class="monument-icon">🔧</span>
+<span class="monument-title">Junkyard</span>
 <select id="junkyard">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Arctic Research Base:</h3>
+<div class="monument-card">
+<span class="monument-icon">🧊</span>
+<span class="monument-title">Arctic Research Base</span>
 <select id="arctic_research_base">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Lighthouse:</h3>
+<div class="monument-card">
+<span class="monument-icon">🗼</span>
+<span class="monument-title">Lighthouse</span>
 <select id="lighthouse">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Military Tunnels:</h3>
+<div class="monument-card">
+<span class="monument-icon">🕳️</span>
+<span class="monument-title">Military Tunnels</span>
 <select id="military_tunnels">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Mining Outpost:</h3>
+<div class="monument-card">
+<span class="monument-icon">⛏️</span>
+<span class="monument-title">Mining Outpost</span>
 <select id="mining_outpost">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
-<div>
-<h3>Missile Silo:</h3>
+<div class="monument-card">
+<span class="monument-icon">🚀</span>
+<span class="monument-title">Missile Silo</span>
 <select id="missile_silo">
 <option value="">Egal</option>
-<option value="snow">Snow</option>
-<option value="desert">Desert</option>
-<option value="temperate">Temperate</option>
+<option value="snow">❄️ Snow</option>
+<option value="desert">🏜️ Desert</option>
+<option value="temperate">🌲 Temperate</option>
 </select>
 </div>
 
