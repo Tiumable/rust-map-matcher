@@ -1,1 +1,134 @@
+<!DOCTYPE html>
+<html>
 
+<head>
+
+<title>Rust Map Matcher</title>
+
+<style>
+
+body{
+background:#1e1e1e;
+color:white;
+font-family:Arial;
+text-align:center;
+}
+
+select,button{
+padding:10px;
+margin:10px;
+}
+
+.resultBox{
+margin-top:20px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Rust Map Matcher</h1>
+
+Launch Site:
+
+<select id="launch">
+
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+
+</select>
+
+<br>
+
+Outpost:
+
+<select id="outpost">
+
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+
+</select>
+
+<br>
+
+Airfield:
+
+<select id="airfield">
+
+<option value="">Egal</option>
+<option value="snow">Snow</option>
+<option value="desert">Desert</option>
+<option value="temperate">Temperate</option>
+
+</select>
+
+<br>
+
+<button onclick="search()">Map finden</button>
+
+<div class="resultBox" id="results"></div>
+
+<script>
+
+async function search(){
+
+let formData = new FormData()
+
+formData.append("launch",
+document.getElementById("launch").value)
+
+formData.append("outpost",
+document.getElementById("outpost").value)
+
+formData.append("airfield",
+document.getElementById("airfield").value)
+
+
+let response = await fetch("/search",{
+
+method:"POST",
+body:formData
+
+})
+
+let data = await response.json()
+
+let html=""
+
+data.results.forEach(map=>{
+
+html+=`
+
+<div>
+
+Seed: ${map.seed} <br>
+Size: ${map.size} <br>
+Match: ${map.match} <br>
+
+<a href="${map.link}" target="_blank">
+Map öffnen
+</a>
+
+<hr>
+
+</div>
+
+`
+
+})
+
+document.getElementById("results").innerHTML=html
+
+}
+
+</script>
+
+</body>
+
+</html>
