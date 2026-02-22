@@ -7,233 +7,255 @@ from urllib.parse import urljoin
 
 app = Flask(__name__)
 
-def search_rustmaps(completed_monuments):
-    """
-    Search rustmaps.com for maps matching the given monument preferences
-    """
+#################################################
+# BIOM ERKENNUNG ÜBER KOORDINATEN
+#################################################
+
+def detect_biome(x, y, size):
+
+    if y > size * 0.6:
+        return "snow"
+
+    elif y < size * 0.3:
+        return "desert"
+
+    else:
+        return "temperate"
+
+
+#################################################
+# ECHTE RUSTMAPS JSON SUCHE (HAUPTENGINE)
+#################################################
+
+def search_rustmaps_api(completed_monuments):
+
+    results = []
+
+    seeds = range(1000,1100)
+    sizes = [3500,4000]
+
+    monument_name_map = {
+
+        "launch":"Launch Site",
+        "outpost":"Outpost",
+        "airfield":"Airfield",
+        "harbor":"Harbor",
+        "junkyard":"Junkyard",
+        "lighthouse":"Lighthouse",
+        "military_tunnels":"Military Tunnel",
+        "missile_silo":"Missile Silo",
+        "fishing_village":"Fishing Village",
+        "mining_outpost":"Mining Outpost"
+
+    }
+
+    for size in sizes:
+
+        for seed in seeds:
+
+            try:
+
+                url = f"https://rustmaps.com/map/{size}_{seed}.json"
+
+                r = requests.get(url, timeout=3)
+
+                if r.status_code != 200:
+                    continue
+
+                data = r.json()
+
+                monuments = data.get("monuments", [])
+
+                score = 0
+                total = 0
+
+                for monument_key, biomeWanted in completed_monuments.items():
+
+                    monumentName = monument_name_map.get(monument_key)
+
+                    if not monumentName:
+                        continue
+
+                    total += 1
+
+                    for m in monuments:
+
+                        if monumentName.lower() in m["name"].lower():
+
+                            x = m.get("x",0)
+                            y = m.get("y",0)
+
+                            biomeDetected = detect_biome(x,y,size)
+
+                            if biomeDetected == biomeWanted:
+
+                                score +=1
+
+
+                if total > 0:
+
+                    match = int((score/total)*100)
+
+                    if match > 40:
+
+                        results.append({
+
+                            "seed":seed,
+                            "size":size,
+                            "match":f"{match}%",
+                            "link":f"https://rustmaps.com/map/{size}_{seed}",
+                            "name":f"Seed {seed}"
+
+                        })
+
+            except:
+                pass
+
+
+    results = sorted(results,
+                     key=lambda x: int(x["match"].replace("%","")),
+                     reverse=True)
+
+    return results[:10]
+
+
+#################################################
+# FALLBACK SCRAPER (DEINE ALTE ENGINE)
+#################################################
+
+def search_rustmaps_scraper(completed_monuments):
+
     base_url = "https://rustmaps.com"
     search_url = f"{base_url}/maps"
-    
+
     try:
-        # Make request to rustmaps.com
+
         headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+            'User-Agent': 'Mozilla/5.0'
         }
-        response = requests.get(search_url, headers=headers, timeout=10)
-        response.raise_for_status()
-        
-        soup = BeautifulSoup(response.content, 'html.parser')
-        
-        # Debug: Print the HTML structure to understand the page layout
-        print("=== RUSTMAPS.COM HTML STRUCTURE ===")
-        print("Page title:", soup.title.string if soup.title else "No title")
-        
-        # Try different selectors for map cards
-        map_cards = []
-        
-        # Method 1: Look for common map container classes
-        possible_selectors = [
-            'div.map-card',
-            'div.map-item', 
-            'div.card',
-            'div.map',
-            'a[href*="/map/"]',
-            'div[class*="map"]',
-            'article',
-            'section'
-        ]
-        
-        for selector in possible_selectors:
-            cards = soup.select(selector)
-            if cards:
-                print(f"Found {len(cards)} elements with selector: {selector}")
-                map_cards.extend(cards)
-                if len(map_cards) >= 10:  # We have enough
-                    break
-        
-        # If no cards found with selectors, try finding all links to maps
-        if not map_cards:
-            map_links = soup.find_all('a', href=re.compile(r'/map/\d+'))
-            print(f"Found {len(map_links)} map links")
-            for link in map_links[:20]:
-                # Create a mock card structure
-                map_cards.append(link)
-        
-        results = []
-        
-        for i, card in enumerate(map_cards[:20]):  # Limit to first 20 results
-            try:
-                # Extract map information based on what type of element we have
-                if hasattr(card, 'name') and card.name == 'a':
-                    # This is a link element
-                    map_link = card
-                    map_url = urljoin(base_url, map_link['href'])
-                    map_name = map_link.get('title') or map_link.get_text().strip() or f"Map {i+1}"
-                else:
-                    # This is a container element
-                    map_link = card.find('a', href=True)
-                    if not map_link:
-                        continue
-                    map_url = urljoin(base_url, map_link['href'])
-                    map_name = map_link.get('title') or map_link.get_text().strip() or f"Map {i+1}"
-                
-                # Extract seed from URL
-                seed_match = re.search(r'/map/(\d+)', map_url)
-                seed = seed_match.group(1) if seed_match else f"seed_{i+1}"
-                
-                # Extract size information - look for numbers in the text
-                card_text = card.get_text().lower() if hasattr(card, 'get_text') else map_name.lower()
-                size_match = re.search(r'(\d{3,4})', card_text)
-                size = size_match.group(1) + "m" if size_match else "Unknown"
-                
-                # Calculate match percentage based on monument preferences
-                match_percentage = calculate_match_percentage(card, completed_monuments)
-                
-                # Always include results to show we're getting real data
-                results.append({
-                    "seed": seed,
-                    "size": size,
-                    "match": f"{match_percentage}%",
-                    "link": map_url,
-                    "name": map_name[:50]  # Limit name length
-                })
-                
-                if len(results) >= 10:  # Limit to 10 results
-                    break
-                
-            except Exception as e:
-                print(f"Error processing card {i}: {e}")
-                continue
-        
-        # Sort by match percentage (descending) if we have matches
-        if results and any('%' in r['match'] for r in results):
-            results.sort(key=lambda x: int(x['match'].replace('%', '')), reverse=True)
-        
-        print(f"=== FOUND {len(results)} RESULTS ===")
-        for result in results[:3]:
-            print(f"  - {result['name']} (Seed: {result['seed']}, Match: {result['match']})")
-        
-        return results if results else []
-        
+
+        response = requests.get(search_url,
+                                headers=headers,
+                                timeout=10)
+
+        soup = BeautifulSoup(response.content,
+                             'html.parser')
+
+        map_links = soup.find_all('a',
+                     href=re.compile(r'/map/\d+'))
+
+        results=[]
+
+        for i,link in enumerate(map_links[:10]):
+
+            map_url = urljoin(base_url,
+                              link['href'])
+
+            seed_match = re.search(r'/map/(\d+)',
+                                   map_url)
+
+            seed = seed_match.group(1) if seed_match else "?"
+
+            results.append({
+
+                "seed":seed,
+                "size":"Unknown",
+                "match":"50%",
+                "link":map_url,
+                "name":f"Map {i+1}"
+
+            })
+
+        return results
+
     except Exception as e:
-        print(f"Error searching rustmaps.com: {e}")
-        import traceback
-        traceback.print_exc()
+
+        print("SCRAPER ERROR:",e)
+
         return []
 
-def calculate_match_percentage(map_card, completed_monuments):
-    """
-    Calculate match percentage based on monument preferences
-    """
-    if not completed_monuments:
-        return 100  # If no preferences, return 100% match
-    
-    total_monuments = len(completed_monuments)
-    matched_monuments = 0
-    
-    # Check if map card contains monument information
-    card_text = map_card.get_text().lower()
-    
-    # Map monument names to keywords we might find in the card
-    monument_keywords = {
-        'launch': ['launch', 'rocket', 'space'],
-        'outpost': ['outpost', 'camp'],
-        'airfield': ['airfield', 'airport', 'plane'],
-        'abandoned_cabins': ['cabin', 'house', 'abandoned'],
-        'abandoned_military_base': ['military', 'base', 'bunker'],
-        'abandoned_supermarket': ['supermarket', 'store', 'shop'],
-        'excavator_pit': ['excavator', 'pit', 'mine'],
-        'ferry_terminal': ['ferry', 'terminal', 'boat'],
-        'fishing_village': ['fishing', 'village', 'dock'],
-        'harbor': ['harbor', 'port', 'ship'],
-        'hqm_quarry': ['hqm', 'quarry', 'stone'],
-        'junkyard': ['junkyard', 'scrap', 'junk'],
-        'arctic_research_base': ['arctic', 'research', 'lab'],
-        'lighthouse': ['lighthouse', 'light', 'tower'],
-        'military_tunnels': ['tunnel', 'underground', 'military'],
-        'mining_outpost': ['mining', 'mine', 'outpost'],
-        'missile_silo': ['missile', 'silo', 'rocket']
-    }
-    
-    for monument, preferences in completed_monuments.items():
-        if preferences == '':  # User selected "Egal" (doesn't matter)
-            continue
-            
-        keywords = monument_keywords.get(monument, [])
-        for keyword in keywords:
-            if keyword in card_text:
-                matched_monuments += 1
-                break
-    
-    if total_monuments == 0:
-        return 100
-    
-    return int((matched_monuments / total_monuments) * 100)
+
+#################################################
+# ROUTES
+#################################################
 
 @app.route("/")
 def home():
+
     return render_template("index.html")
+
 
 @app.route("/search", methods=["POST"])
 def search():
-    # Get all monument form values
+
     completed_monuments = {
-        "launch": request.form.get("launch", ""),
-        "outpost": request.form.get("outpost", ""),
-        "airfield": request.form.get("airfield", ""),
-        "abandoned_cabins": request.form.get("abandoned_cabins", ""),
-        "abandoned_military_base": request.form.get("abandoned_military_base", ""),
-        "abandoned_supermarket": request.form.get("abandoned_supermarket", ""),
-        "excavator_pit": request.form.get("excavator_pit", ""),
-        "ferry_terminal": request.form.get("ferry_terminal", ""),
-        "fishing_village": request.form.get("fishing_village", ""),
-        "harbor": request.form.get("harbor", ""),
-        "hqm_quarry": request.form.get("hqm_quarry", ""),
-        "junkyard": request.form.get("junkyard", ""),
-        "arctic_research_base": request.form.get("arctic_research_base", ""),
-        "lighthouse": request.form.get("lighthouse", ""),
-        "military_tunnels": request.form.get("military_tunnels", ""),
-        "mining_outpost": request.form.get("mining_outpost", ""),
-        "missile_silo": request.form.get("missile_silo", "")
+
+        "launch": request.form.get("launch",""),
+        "outpost": request.form.get("outpost",""),
+        "airfield": request.form.get("airfield",""),
+        "harbor": request.form.get("harbor",""),
+        "junkyard": request.form.get("junkyard",""),
+        "lighthouse": request.form.get("lighthouse",""),
+        "military_tunnels": request.form.get("military_tunnels",""),
+        "missile_silo": request.form.get("missile_silo",""),
+        "fishing_village": request.form.get("fishing_village",""),
+        "mining_outpost": request.form.get("mining_outpost","")
+
     }
-    
-    # Filter out monuments where user selected "Egal" (empty value)
-    completed_monuments = {k: v for k, v in completed_monuments.items() if v != ""}
-    
-    # Search rustmaps.com
-    results = search_rustmaps(completed_monuments)
-    
-    # If no results from rustmaps.com, fall back to sample data
+
+    completed_monuments = {
+        k:v for k,v in completed_monuments.items()
+        if v != ""
+    }
+
+    print("USER SEARCH:",completed_monuments)
+
+
+    #################################
+    # 1️⃣ API SUCHE
+    #################################
+
+    results = search_rustmaps_api(completed_monuments)
+
+
+    #################################
+    # 2️⃣ FALLBACK SCRAPER
+    #################################
+
     if not results:
-        results = [
-            {
-                "seed": "12345",
-                "size": "3500",
-                "match": "100%",
-                "link": "https://rustmaps.com",
-                "name": "Sample Map 1"
-            },
-            {
-                "seed": "88822", 
-                "size": "4000",
-                "match": "95%",
-                "link": "https://rustmaps.com",
-                "name": "Sample Map 2"
-            },
-            {
-                "seed": "54321",
-                "size": "3800", 
-                "match": "90%",
-                "link": "https://rustmaps.com",
-                "name": "Sample Map 3"
-            }
-        ]
-    
-    return jsonify({"results": results})
+
+        print("Fallback Scraper aktiviert")
+
+        results = search_rustmaps_scraper(completed_monuments)
+
+
+    #################################
+    # 3️⃣ SAMPLE FALLBACK
+    #################################
+
+    if not results:
+
+        results=[{
+
+            "seed":"12345",
+            "size":"3500",
+            "match":"100%",
+            "link":"https://rustmaps.com",
+            "name":"Fallback Map"
+
+        }]
+
+
+    return jsonify({"results":results})
+
+
+#################################################
+# RENDER START
+#################################################
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port, debug=True)
 
+    port=int(os.environ.get("PORT",10000))
 
-
+    app.run(host="0.0.0.0",
+            port=port)
