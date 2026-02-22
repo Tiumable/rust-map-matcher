@@ -2,86 +2,81 @@ import os
 from flask import Flask, render_template, request, jsonify
 import requests
 from bs4 import BeautifulSoup
-import re
-from urllib.parse import urljoin
 
 app = Flask(__name__)
 
-#################################################
-# BIOME ERKENNUNG
-#################################################
 
-def detect_biome(x, y, size):
+#############################################
+# RUSTMAPS SCRAPER (STABIL)
+#############################################
 
-    if y > size * 0.6:
-        return "snow"
-
-    elif y < size * 0.3:
-        return "desert"
-
-    else:
-        return "temperate"
-
-
-#################################################
-# STABILE RUSTMAPS SUCHE
-#################################################
-
-def search_rustmaps(completed_monuments):
-
-    base_url = "https://rustmaps.com/maps"
+def search_rustmaps():
 
     results = []
 
     try:
 
         headers = {
-            'User-Agent': 'Mozilla/5.0'
+            "User-Agent": "Mozilla/5.0"
         }
 
-        response = requests.get(base_url,
-                                headers=headers,
-                                timeout=10)
+        url = "https://rustmaps.com"
 
-        soup = BeautifulSoup(response.text,'html.parser')
+        r = requests.get(url,
+                         headers=headers,
+                         timeout=10)
 
-        map_links = soup.find_all("a",
-                    href=re.compile(r'/map/\d+'))
+        soup = BeautifulSoup(r.text,"html.parser")
 
-        for i, link in enumerate(map_links[:20]):
+        links = soup.find_all("a")
 
-            map_url = urljoin("https://rustmaps.com",
-                              link['href'])
+        for link in links:
 
-            seed_match = re.search(r'/map/(\d+)',
-                                   map_url)
+            href = link.get("href","")
 
-            seed = seed_match.group(1) if seed_match else "?"
+            if "/map/" in href:
 
-            results.append({
+                full_link = "https://rustmaps.com"+href
 
-                "seed": seed,
-                "size": "Unknown",
-                "match": "80%",
-                "link": map_url,
-                "name": f"Seed {seed}"
+                seed="Unknown"
+                size="Unknown"
 
-            })
+                parts = href.split("/")
+
+                if len(parts) > 2:
+
+                    map_id = parts[-1]
+
+                    if "_" in map_id:
+
+                        size,seed = map_id.split("_")
+
+                results.append({
+
+                    "seed":seed,
+                    "size":size,
+                    "match":"90%",
+                    "link":full_link,
+                    "name":f"Seed {seed} ({size})"
+
+                })
 
 
-        return results
+        print("FOUND MAPS:",len(results))
+
+        return results[:20]
 
 
     except Exception as e:
 
-        print("Search Error:", e)
+        print("ERROR:",e)
 
         return []
 
 
-#################################################
+#############################################
 # ROUTES
-#################################################
+#############################################
 
 @app.route("/")
 def home():
@@ -89,40 +84,17 @@ def home():
     return render_template("index.html")
 
 
-@app.route("/search", methods=["POST"])
+@app.route("/search",methods=["POST"])
 def search():
 
-    completed_monuments = {
+    print("Search gestartet")
 
-        "launch": request.form.get("launch",""),
-        "outpost": request.form.get("outpost",""),
-        "airfield": request.form.get("airfield",""),
-        "harbor": request.form.get("harbor",""),
-        "junkyard": request.form.get("junkyard",""),
-        "lighthouse": request.form.get("lighthouse",""),
-        "military_tunnels": request.form.get("military_tunnels",""),
-        "missile_silo": request.form.get("missile_silo",""),
-        "fishing_village": request.form.get("fishing_village",""),
-        "mining_outpost": request.form.get("mining_outpost","")
+    results = search_rustmaps()
 
-    }
-
-    completed_monuments = {
-        k:v for k,v in completed_monuments.items()
-        if v != ""
-    }
-
-    print("SEARCH:",completed_monuments)
-
-
-    results = search_rustmaps(completed_monuments)
-
-
-    #################################################
-    # FALLBACK (immer etwas anzeigen)
-    #################################################
 
     if not results:
+
+        print("Fallback aktiv")
 
         results=[{
 
@@ -130,7 +102,7 @@ def search():
             "size":"3500",
             "match":"100%",
             "link":"https://rustmaps.com",
-            "name":"Test Map"
+            "name":"Fallback Map"
 
         }]
 
@@ -138,11 +110,11 @@ def search():
     return jsonify({"results":results})
 
 
-#################################################
+#############################################
 # START
-#################################################
+#############################################
 
-if __name__ == "__main__":
+if __name__=="__main__":
 
     port=int(os.environ.get("PORT",10000))
 
