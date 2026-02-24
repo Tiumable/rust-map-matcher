@@ -224,6 +224,14 @@ font-size: 1.8rem;
 
 <h1>Rust Map Matcher</h1>
 
+<div style="max-width: 600px; margin: 0 auto 30px;">
+    <div style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 20px; backdrop-filter: blur(10px);">
+        <label style="display: block; text-align: left; margin-bottom: 10px; font-weight: bold; color: #ffd93d;">API Number:</label>
+        <input type="text" id="apiNumber" placeholder="12345" style="width: 100%; padding: 12px; background: rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 6px; color: white; font-size: 1rem;">
+        <small style="display: block; color: #888; margin-top: 5px;">Geben Sie die API-Nummer von rustmaps.com ein (z.B. 12345)</small>
+    </div>
+</div>
+
 <div class="monument-grid">
 
 <div class="monument-card">
@@ -423,34 +431,39 @@ font-size: 1.8rem;
 <script>
 
 async function search(){
+    // Get API Number
+    let apiNumber = document.getElementById("apiNumber").value.trim();
+    
+    let formData = new FormData()
 
-let formData = new FormData()
+    // Original monuments
+    formData.append("launch", document.getElementById("launch").value)
+    formData.append("outpost", document.getElementById("outpost").value)
+    formData.append("airfield", document.getElementById("airfield").value)
 
-// Original monuments
-formData.append("launch", document.getElementById("launch").value)
-formData.append("outpost", document.getElementById("outpost").value)
-formData.append("airfield", document.getElementById("airfield").value)
+    // New monuments
+    formData.append("abandoned_cabins", document.getElementById("abandoned_cabins").value)
+    formData.append("abandoned_military_base", document.getElementById("abandoned_military_base").value)
+    formData.append("abandoned_supermarket", document.getElementById("abandoned_supermarket").value)
+    formData.append("excavator_pit", document.getElementById("excavator_pit").value)
+    formData.append("ferry_terminal", document.getElementById("ferry_terminal").value)
+    formData.append("fishing_village", document.getElementById("fishing_village").value)
+    formData.append("harbor", document.getElementById("harbor").value)
+    formData.append("hqm_quarry", document.getElementById("hqm_quarry").value)
+    formData.append("junkyard", document.getElementById("junkyard").value)
+    formData.append("arctic_research_base", document.getElementById("arctic_research_base").value)
+    formData.append("lighthouse", document.getElementById("lighthouse").value)
+    formData.append("military_tunnels", document.getElementById("military_tunnels").value)
+    formData.append("mining_outpost", document.getElementById("mining_outpost").value)
+    formData.append("missile_silo", document.getElementById("missile_silo").value)
+    
+    // Add API Number to form data
+    formData.append("apiNumber", apiNumber)
 
-// New monuments
-formData.append("abandoned_cabins", document.getElementById("abandoned_cabins").value)
-formData.append("abandoned_military_base", document.getElementById("abandoned_military_base").value)
-formData.append("abandoned_supermarket", document.getElementById("abandoned_supermarket").value)
-formData.append("excavator_pit", document.getElementById("excavator_pit").value)
-formData.append("ferry_terminal", document.getElementById("ferry_terminal").value)
-formData.append("fishing_village", document.getElementById("fishing_village").value)
-formData.append("harbor", document.getElementById("harbor").value)
-formData.append("hqm_quarry", document.getElementById("hqm_quarry").value)
-formData.append("junkyard", document.getElementById("junkyard").value)
-formData.append("arctic_research_base", document.getElementById("arctic_research_base").value)
-formData.append("lighthouse", document.getElementById("lighthouse").value)
-formData.append("military_tunnels", document.getElementById("military_tunnels").value)
-formData.append("mining_outpost", document.getElementById("mining_outpost").value)
-formData.append("missile_silo", document.getElementById("missile_silo").value)
-
-let response = await fetch("/search",{
-method:"POST",
-body:formData
-})
+    let response = await fetch("/search",{
+    method:"POST",
+    body:formData
+    })
 
 let data = await response.json()
 
