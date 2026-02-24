@@ -1,7 +1,6 @@
 import os
 from flask import Flask, render_template, request, jsonify
 import requests
-from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
@@ -16,60 +15,57 @@ def search_rustmaps():
 
     try:
 
+        api_key = 'HIER API KEY EINFÜGEN'  # Optional: API-Key aus Umgebungsvariable oder direkt hier einfügen
+        
         headers = {
-            "User-Agent": "Mozilla/5.0"
+            "User-Agent": "Mozilla/5.0",
+            "Content-Type": "application/json"
         }
 
-        url = "https://rustmaps.com"
+        if api_key:
+            headers["X-API-Key"] = api_key
 
-        r = requests.get(url,
+        url = "https://api.rustmaps.com/v4/maps/search?page=0"
+
+        payload = {
+            "searchQuery": {
+                "size": {
+                    "min": 1000,
+                    "max": 6000
+                }
+            }
+        }
+
+        r = requests.post(url,
+                         json=payload,
                          headers=headers,
                          timeout=10)
 
-        soup = BeautifulSoup(r.text,"html.parser")
+        if r.status_code == 200:
+            data = r.json()
+            
+            if "data" in data and data["data"]:
+                for map_item in data["data"]:
+                    results.append({
+                        "seed": str(map_item.get("seed", "Unknown")),
+                        "size": str(map_item.get("size", "Unknown")),
+                        "match": "100%",
+                        "link": map_item.get("url", "https://rustmaps.com"),
+                        "name": f"Seed {map_item.get('seed', 'Unknown')} ({map_item.get('size', 'Unknown')})"
+                    })
+        else:
+            print(f"API Error: Status {r.status_code}")
+            if r.status_code == 401:
+                print("API-Key erforderlich! Setze die Umgebungsvariable RUSTMAPS_API_KEY")
 
-        links = soup.find_all("a")
-
-        for link in links:
-
-            href = link.get("href","")
-
-            if "/map/" in href:
-
-                full_link = "https://rustmaps.com"+href
-
-                seed="Unknown"
-                size="Unknown"
-
-                parts = href.split("/")
-
-                if len(parts) > 2:
-
-                    map_id = parts[-1]
-
-                    if "_" in map_id:
-
-                        size,seed = map_id.split("_")
-
-                results.append({
-
-                    "seed":seed,
-                    "size":size,
-                    "match":"90%",
-                    "link":full_link,
-                    "name":f"Seed {seed} ({size})"
-
-                })
-
-
-        print("FOUND MAPS:",len(results))
+        print("FOUND MAPS:", len(results))
 
         return results[:20]
 
 
     except Exception as e:
 
-        print("ERROR:",e)
+        print("ERROR:", e)
 
         return []
 
